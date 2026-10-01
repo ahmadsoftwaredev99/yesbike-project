@@ -26,10 +26,18 @@ const parseAllowedOrigins = () => {
   const envOrigins = process.env.CLIENT_URL
     ? process.env.CLIENT_URL.split(",").map((o) => o.trim()).filter(Boolean)
     : [];
+  const vercelEnvOrigins = [];
+  if (process.env.VERCEL_URL) {
+    vercelEnvOrigins.push(`https://${process.env.VERCEL_URL}`);
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    vercelEnvOrigins.push(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  }
   return [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:5000",
+    ...vercelEnvOrigins,
     ...envOrigins,
   ];
 };
@@ -42,8 +50,10 @@ app.use(
 
       const allowed = parseAllowedOrigins();
       const isAllowedExplicit = allowed.includes(origin);
-      // Allow Vercel preview and production subdomains
-      const isVercelSubdomain = origin.endsWith(".vercel.app");
+      // Allow Vercel preview and production subdomains (*.vercel.app)
+      const isVercelSubdomain =
+        origin.endsWith(".vercel.app") ||
+        /^https:\/\/[a-z0-9-]+-.*\.vercel\.app$/.test(origin);
 
       if (isAllowedExplicit || isVercelSubdomain) {
         return callback(null, true);
@@ -54,7 +64,8 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "4mb" }));
+app.use(express.urlencoded({ extended: true, limit: "4mb" }));
 
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
@@ -68,8 +79,7 @@ const healthHandler = (req, res) =>
     timestamp: new Date().toISOString(),
   });
 
-app.get("/api/health", healthHandler);
-app.get("/health", healthHandler);
+app.get(["/api", "/api/", "/api/health", "/health"], healthHandler);
 
 // Database connection middleware: ensures MongoDB is connected for incoming API requests
 app.use(async (req, res, next) => {

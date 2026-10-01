@@ -132,14 +132,15 @@ git push -u origin main
 1. Log in to [Vercel](https://vercel.com).
 2. Click **Add New** → **Project**.
 3. Select your GitHub repository (`yesbike`) and click **Import**.
-4. Leave **Framework Preset** as **Vite** (or Other). The provided `vercel.json` automatically manages the build and rewrites.
-5. In **Environment Variables**, add the required production values:
-   - `MONGO_URI`: Your MongoDB Atlas connection string.
+4. For **Framework Preset**, select **Other** (since `vercel.json` at the root explicitly specifies the build command and output directory).
+5. Leave **Root Directory** as `./` (the repository root).
+6. In **Environment Variables**, add the required production values:
+   - `MONGO_URI`: Your MongoDB Atlas connection string (ensure IP Access `0.0.0.0/0` is allowed in Atlas Network Access).
    - `JWT_SECRET`: A long, cryptographically secure random string.
    - `JWT_EXPIRES_IN`: `30d` (or desired token lifetime).
    - `CLIENT_URL`: *(Optional)* Your production Vercel URL (e.g., `https://your-project.vercel.app`).
    - `NODE_ENV`: `production`
-6. Click **Deploy**.
+7. Click **Deploy**.
 
 Vercel will install dependencies, build the React frontend into `client/dist`, deploy the Express backend to `/api/index.js`, and route all traffic seamlessly!
 

@@ -29,9 +29,16 @@ const connectDB = async () => {
     return cached.conn;
   }
 
+  // If connection was disconnected or closed, clear the stale cache
+  if (mongoose.connection.readyState === 0 || mongoose.connection.readyState === 3) {
+    cached.promise = null;
+    cached.conn = null;
+  }
+
   if (!cached.promise) {
     const opts = {
       bufferCommands: false, // Fail fast on dropped connection rather than hanging
+      serverSelectionTimeoutMS: 8000, // Timeout after 8s if cluster is unreachable
     };
 
     cached.promise = mongoose.connect(uri, opts).then((mongooseInstance) => {
